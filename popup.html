@@ -2,10 +2,17 @@
 <html>
   <head>
     <title>TOS Summarizer</title>
+    <link rel="stylesheet" type="text/css" href="popup.css" />
   </head>
   <body>
     <h3>TOS Summarizer</h3>
-    <button id="summarize-btn">Summarize TOS</button>
+    
+    <label for="auto-detect-toggle">TOS AUTO popup:</label>
+    <input type="checkbox" id="auto-detect-toggle" />
+    
+    <button id="summarize-btn">Summarize TOS Manually</button>
+    
+    <!-- This is the sentence to display the current status of TOS detection -->
     <p id="summary">No TOS detected yet...</p>
 
     <script src="popup.js"></script>
