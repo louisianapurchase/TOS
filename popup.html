@@ -2,19 +2,24 @@
 <html>
   <head>
     <title>TOS Summarizer</title>
-    <link rel="stylesheet" type="text/css" href="popup.css" />
+    <link rel="stylesheet" type="text/css" href="styles/popup.css" />
   </head>
   <body>
-    <h3>TOS Summarizer</h3>
-    
-    <label for="auto-detect-toggle">TOS AUTO popup:</label>
-    <input type="checkbox" id="auto-detect-toggle" />
-    
-    <button id="summarize-btn">Summarize TOS Manually</button>
-    
-    <!-- This is the sentence to display the current status of TOS detection -->
-    <p id="summary">No TOS detected yet...</p>
+    <div class="popup-container">
+      <h1 class="popup-title">
+        <img src="Icons/Terms of Service Examining tool.png" alt="Icon" class="title-icon" />
+        TermsSimplify
+      </h1>
+      
+      <div class="toggle-section">
+        <label for="auto-detect-toggle">TOS Auto Popup:</label>
+        <input type="checkbox" id="auto-detect-toggle" />
+      </div>
 
+      <button id="summarize-btn" class="action-button">Summarize TOS Manually</button>
+
+      <p id="summary" class="status-message">No TOS detected yet...</p>
+    </div>
     <script src="popup.js"></script>
   </body>
 </html>

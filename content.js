@@ -23,66 +23,79 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     showTOSPopup();  // Function to show the popup
   }
 });
-
+const injectFontStyles = () => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      * {
+        font-family: 'Roboto', Arial, sans-serif !important;
+      }
+    `;
+    document.head.appendChild(style);
+  };
+  
+  injectFontStyles();
+  
 // Function to display the popup when TOS is detected
 const showTOSPopup = () => {
-  if (isPopupShown) return;  // Prevent the popup from showing if already displayed
-
-  isPopupShown = true; // Set the flag to indicate the popup has been shown
-
-  const popup = document.createElement('div');
-  popup.style.position = 'fixed';
-  popup.style.top = '50%';
-  popup.style.left = '50%';
-  popup.style.transform = 'translate(-50%, -50%)';
-  popup.style.padding = '20px';
-  popup.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-  popup.style.color = 'white';
-  popup.style.zIndex = '9999';
-
-  // Add content to the popup
-  const title = document.createElement('h3');
-  title.textContent = 'TOS Detected';
-  const message = document.createElement('p');
-  message.textContent = 'Would you like to summarize and score the TOS?';
-
-  // Create and style the buttons
-  const summarizeButton = document.createElement('button');
-  summarizeButton.textContent = 'Summarize and Score';
-  summarizeButton.style.backgroundColor = '#333'; // Darker color for visibility
-  summarizeButton.style.color = 'white'; // Button text color
-  summarizeButton.style.padding = '10px';
-  summarizeButton.style.marginRight = '10px';
-  summarizeButton.style.border = 'none';
-  summarizeButton.style.cursor = 'pointer';
-
-  const ignoreButton = document.createElement('button');
-  ignoreButton.textContent = 'Ignore';
-  ignoreButton.style.backgroundColor = '#333'; // Darker color for visibility
-  ignoreButton.style.color = 'white'; // Button text color
-  ignoreButton.style.padding = '10px';
-  ignoreButton.style.border = 'none';
-  ignoreButton.style.cursor = 'pointer';
-
-  // Add event listeners to the buttons
-  summarizeButton.addEventListener('click', function() {
-    chrome.runtime.sendMessage({ action: 'summarize' });
-    document.body.removeChild(popup);
-  });
-
-  ignoreButton.addEventListener('click', function() {
-    document.body.removeChild(popup);
-  });
-
-  // Append elements to the popup
-  popup.appendChild(title);
-  popup.appendChild(message);
-  popup.appendChild(summarizeButton);
-  popup.appendChild(ignoreButton);
-
-  // Append the popup to the body
-  document.body.appendChild(popup);
-};
+    if (isPopupShown) return;  // Prevent the popup from showing if already displayed
+  
+    isPopupShown = true; // Set the flag to indicate the popup has been shown
+  
+    const popup = document.createElement('div');
+    popup.style.position = 'fixed';
+    popup.style.top = '50%';
+    popup.style.left = '50%';
+    popup.style.transform = 'translate(-50%, -50%)';
+    popup.style.padding = '20px';
+    popup.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    popup.style.color = 'white';
+    popup.style.zIndex = '9999';
+    popup.style.fontFamily = "'Roboto', Arial, sans-serif";  // Set the font family for the popup
+  
+    // Add content to the popup
+    const title = document.createElement('h3');
+    title.textContent = 'TOS Detected';
+    const message = document.createElement('p');
+    message.textContent = 'Would you like to summarize and score the TOS?';
+  
+    // Create and style the buttons
+    const summarizeButton = document.createElement('button');
+    summarizeButton.textContent = 'Summarize and Score';
+    summarizeButton.style.backgroundColor = '#333'; // Darker color for visibility
+    summarizeButton.style.color = 'white'; // Button text color
+    summarizeButton.style.padding = '10px';
+    summarizeButton.style.marginRight = '10px';
+    summarizeButton.style.border = 'none';
+    summarizeButton.style.cursor = 'pointer';
+  
+    const ignoreButton = document.createElement('button');
+    ignoreButton.textContent = 'Ignore';
+    ignoreButton.style.backgroundColor = '#333'; // Darker color for visibility
+    ignoreButton.style.color = 'white'; // Button text color
+    ignoreButton.style.padding = '10px';
+    ignoreButton.style.border = 'none';
+    ignoreButton.style.cursor = 'pointer';
+  
+    // Add event listeners to the buttons
+    summarizeButton.addEventListener('click', function() {
+      chrome.runtime.sendMessage({ action: 'summarize' });
+      document.body.removeChild(popup);
+    });
+  
+    ignoreButton.addEventListener('click', function() {
+      document.body.removeChild(popup);
+    });
+  
+    // Append elements to the popup
+    popup.appendChild(title);
+    popup.appendChild(message);
+    popup.appendChild(summarizeButton);
+    popup.appendChild(ignoreButton);
+  
+    // Append the popup to the body
+    document.body.appendChild(popup);
+  };
+  
 
 // Continuously check for TOS detection on page load and at intervals
 const autoDetectTOS = () => {

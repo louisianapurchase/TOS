@@ -1,42 +1,75 @@
-/* popup.css */
-
-/* Basic styles for the modal */
-.tos-popup {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 9999;
-  background-color: rgba(0, 0, 0, 0.5); /* Overlay background */
-}
-
-.tos-popup-overlay {
+/* General Styling */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #2f2f2f; /* Grey background for the popup */
+  color: #fff; /* White text */
+  font-family: 'Roboto', Arial, sans-serif; /* Modern, professional font */
+  font-size: 16px;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%;
+  width: 350px; /* Fixed width */
+  height: 250px; /* Fixed height for consistency */
+  border-radius: 15px; /* Rounded corners */
+  
+  overflow: hidden; /* Prevent any scrolling */
 }
 
-.tos-popup-content {
-  background: white;
-  padding: 20px;
-  text-align: center;
-  border-radius: 8px;
-  width: 300px;
+/* Title styling */
+.popup-title {
+  margin-bottom: 15px;
+  font-size: 22px; /* Adjusted for better scaling */
+  font-weight: bold;
+  color: #8743d0; /* Purple title */
+  line-height: 1.3; /* Make line height a little taller for readability */
 }
 
-button {
-  margin-top: 10px;
-  padding: 10px;
+/* Toggle section */
+.toggle-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 10px;
+  font-size: 14px; /* Adjusted font size for toggle text */
+  line-height: 1.4; /* Slightly more space between lines */
+}
+
+/* Checkbox styling */
+#auto-detect-toggle {
+  transform: scale(1.5); /* Increase size of the checkbox */
+  margin-right: 10px; /* Spacing for the checkbox */
+}
+
+/* Button styling */
+.action-button {
+  background-color: #8743d0; /* Purple button */
+  color: #fff;
   border: none;
-  background-color: #007BFF;
-  color: white;
   border-radius: 5px;
+  padding: 12px 25px; /* Larger button for easier click */
   cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 16px; /* Ensure button text size matches */
 }
 
-button:hover {
-  background-color: #0056b3;
+.action-button:hover {
+  background-color: #ba1313; /* Darker color on hover */
+}
+
+/* Status message */
+.status-message {
+  margin-top: 15px;
+  font-size: 14px;
+  font-style: italic;
+  color: #ccc; /* Lighter text for status */
+  line-height: 1.5; /* Better line height for status */
+}
+/* Add this to your existing popup.css */
+.title-icon {
+  width: 30px;  /* Adjust the size of the icon */
+  height: 30px; /* Adjust the size of the icon */
+  margin-right: 10px; /* Space between the icon and the title */
+  vertical-align: middle; /* Align icon vertically with text */
 }
