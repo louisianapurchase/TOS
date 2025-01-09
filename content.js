@@ -2,13 +2,78 @@ let isPopupShown = false; // Flag to prevent continuous popup opening
 
 // Function to detect if TOS is present on the page
 const checkForTOS = () => {
-  const termsOfService = document.body.innerText;
+  // Normalize page text to lowercase
+  const pageText = document.body.innerText.toLowerCase();
 
-  // Look for terms of service-related phrases
-  return termsOfService.includes("Terms of Service") || 
-         termsOfService.includes("Privacy Policy") || 
-         termsOfService.includes("End User Agreement") || 
-         termsOfService.includes("Terms of Use");
+  // Extensive list of contract-related phrases
+  const tosPhrases = [
+    /terms of service/i,
+    /privacy policy/i,
+    /end user agreement/i,
+    /terms of use/i,
+    /conditions of use/i,
+    /user agreement/i,
+    /license agreement/i,
+    /acceptable use policy/i,
+    /data use policy/i,
+    /cookie policy/i,
+    /service agreement/i,
+    /contract terms/i,
+    /agreement terms/i,
+    /gdpr compliance/i,
+    /ccpa compliance/i,
+    /arbitration agreement/i,
+    /liability waiver/i,
+    /refund policy/i,
+    /payment terms/i,
+    /subscription terms/i,
+    /dispute resolution/i,
+    /binding agreement/i,
+    /data sharing policy/i
+  ];
+
+  // Keywords for button/link detection
+  const actionKeywords = [
+    /accept/i,
+    /agree/i,
+    /continue/i,
+    /confirm/i,
+    /decline/i,
+    /reject/i
+  ];
+
+  // Context-based element detection
+  const detectContextualElements = () => {
+    // Check if modal-like elements exist
+    const modals = document.querySelectorAll('div[role="dialog"], div[class*="modal"], div[class*="popup"]');
+    for (const modal of modals) {
+      const modalText = modal.innerText.toLowerCase();
+      if (tosPhrases.some((regex) => regex.test(modalText))) {
+        return true; // Found TOS content in a modal
+      }
+    }
+
+    // Check for buttons or links with action keywords
+    const buttons = document.querySelectorAll('button, a');
+    for (const button of buttons) {
+      if (actionKeywords.some((regex) => regex.test(button.innerText))) {
+        const parentText = button.closest('div')?.innerText?.toLowerCase() || ''; // Get parent context
+        if (tosPhrases.some((regex) => regex.test(parentText))) {
+          return true; // Found relevant button in a TOS context
+        }
+      }
+    }
+    const footer = document.querySelector('footer');
+    if (footer && tosPhrases.some((regex) => regex.test(footer.innerText.toLowerCase()))) {
+      return false;  // Don't trigger popup if it's just footer text
+    }
+
+    return false; // No contextual elements detected
+  };
+
+  // Check if terms are present in body text or relevant elements
+  const isTOSDetected = tosPhrases.some((regex) => regex.test(pageText)) || detectContextualElements();
+  return isTOSDetected;
 };
 
 // Listen for the check request from popup.js to know if TOS is present
@@ -58,7 +123,7 @@ const showTOSPopup = () => {
       border-radius: 15px;
       box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
       width: 350px;
-      height: 250px;  /* Adjusted height for the title and buttons */
+      height: 250px;
       text-align: center;
     }
 
@@ -68,14 +133,14 @@ const showTOSPopup = () => {
       justify-content: center;
       font-size: 22px;
       font-weight: bold;
-      color: #8743d0;  /* Purple color for the title */
+      color: #8743d0;
       margin-bottom: 15px;
     }
 
     .title-icon {
       width: 30px;
       height: 30px;
-      margin-right: 10px;  /* Space between the icon and the title text */
+      margin-right: 10px;
     }
 
     .action-button {
@@ -107,7 +172,7 @@ const showTOSPopup = () => {
 
   // Create the image element
   const titleIcon = document.createElement('img');
-  titleIcon.src = chrome.runtime.getURL("Icons/TermsofServiceExaminingtool.png");  // Ensure correct path
+  titleIcon.src = chrome.runtime.getURL("Icons/TermsofServiceExaminingtool.png");
   titleIcon.alt = "Icon";
   titleIcon.classList.add('title-icon');
 
@@ -133,19 +198,83 @@ const showTOSPopup = () => {
   ignoreButton.textContent = 'Ignore';
 
   // Add event listeners to the buttons
-  summarizeButton.addEventListener('click', function() {
-    chrome.runtime.sendMessage({ action: 'summarize' });
-    document.body.removeChild(popup);
+  summarizeButton.addEventListener('click', async function() {
+    console.log("Summarize button clicked");
+  
+    try {
+      const tosText = await extractTOSText(); // Wait for TOS text extraction
+      console.log("Extracted TOS Text:", tosText);
+  
+      // If no TOS text is found, alert the user and stop
+      if (!tosText) {
+        alert("No TOS text detected.");
+        return;
+      }
+  
+      // Send TOS text to the Flask server for summarization
+      const response = await fetch('http://localhost:5000/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tosText: tosText })
+      });
+  
+      // Check if the response is okay (status code 200-299)
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error || "Unknown error"}`);
+        console.error("Error from server:", errorData);
+        return;
+      }
+  
+      // Parse the response data
+      const data = await response.json();
+      console.log("Server response:", data);
+  
+      // Check if there is an error in the response
+      if (data.error) {
+        alert(`Error: ${data.error}`);
+      } else {
+        // Show the summary and score in an alert or update your popup UI
+        alert(`Summary: ${data.summary}\nScore: ${data.score}`);
+      }
+    } catch (error) {
+      // Catch any errors in the async flow
+      console.error('Error:', error);
+      alert('Failed to summarize TOS. Please try again.');
+    }
+  
+    // Remove the popup after summarization is complete
+    const popup = document.querySelector('.popup-container'); // Get the popup by class name (make sure the class matches)
+    if (popup) {
+      popup.closest('div').remove(); // Remove the entire popup container
+      isPopupShown = false; // Reset the flag so the popup can be shown again if needed
+    }
   });
-
+  
+  
+  // Example function to extract TOS text (you need to replace this with actual DOM extraction logic)
+  async function extractTOSText() {
+    console.log("Extracting TOS text...");
+  
+    // Placeholder for actual TOS extraction logic, for example, extracting text from the body
+    const tosText = document.body.innerText.match(/Terms of Service/i)
+      ? document.body.innerText
+      : null;
+  
+    console.log("TOS text extracted:", tosText);
+    return tosText;
+  }
+  
   ignoreButton.addEventListener('click', function() {
     document.body.removeChild(popup);
+
   });
+  
 
   // Add small text at the bottom about turning off auto-popup
   const autoDetectText = document.createElement('p');
   autoDetectText.classList.add('auto-detect-text');
-  autoDetectText.textContent = 'To turn off auto pop-up, press the extension icon in Extensions.';
+  autoDetectText.textContent = 'To turn off auto pop-up, press the TermsSimplify Icon in Extensions.';
 
   // Append elements to shadow DOM
   container.appendChild(summarizeButton);
@@ -160,17 +289,19 @@ const showTOSPopup = () => {
 // Continuously check for TOS detection on page load and at intervals
 const autoDetectTOS = () => {
   chrome.storage.local.get('autoDetect', function(data) {
-    if (data.autoDetect) {
-      // If auto-detect is enabled, keep checking for TOS on the page
-      if (checkForTOS()) {
-        showTOSPopup(); // Show popup if TOS is detected
-      }
+    if (data.autoDetect && checkForTOS()) {
+      showTOSPopup();  // Only show the popup if TOS is detected
     }
   });
 };
 
-// Check for TOS as soon as the content script runs
-autoDetectTOS();
+// Only check after the page load
+window.addEventListener('load', autoDetectTOS);
 
-// Optionally, add a check at intervals (e.g., every 5 seconds)
-setInterval(autoDetectTOS, 5000);
+// Optionally add a periodic check (e.g., every 5 seconds) but only if TOS isn't already shown
+setInterval(() => {
+  if (!isPopupShown) {
+    autoDetectTOS();
+  }
+}, 5000);
+
