@@ -89,10 +89,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // This is a placeholder function to extract TOS text.
     // Replace this logic with actual DOM parsing or content extraction.
     const tosText = document.body.innerText.match(/Terms of Service/i)
-      ? document.body.innerText
-      : null;
+        ? document.body.innerText
+      : "Dummy Terms of Service text for testing.";
   
-    console.log("TOS text extraction result:", tosText);
+    console.log("TOS text extracted:", tosText);
     return tosText;
   }
   

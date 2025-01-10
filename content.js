@@ -244,29 +244,41 @@ const showTOSPopup = () => {
     }
   
     // Remove the popup after summarization is complete
-    const popup = document.querySelector('.popup-container'); // Get the popup by class name (make sure the class matches)
-    if (popup) {
-      popup.closest('div').remove(); // Remove the entire popup container
-      isPopupShown = false; // Reset the flag so the popup can be shown again if needed
-    }
+    document.body.removeChild(popup);
+    isPopupShown = false; // Reset the flag so it can be shown again if needed
   });
   
   
-  // Example function to extract TOS text (you need to replace this with actual DOM extraction logic)
+  // Function to update summary text based on TOS detection
+  const updateSummaryText = (isTOSDetected) => {
+    if (isTOSDetected) {
+      summaryText.textContent = 'TOS detected on Page';
+      console.log('TOS detected on Page');
+    } else {
+      summaryText.textContent = 'No TOS detected yet...';
+      console.log('No TOS detected yet...');
+    }
+  };
+  
+  // Example function to extract TOS text (needs real implementation)
   async function extractTOSText() {
     console.log("Extracting TOS text...");
-  
-    // Placeholder for actual TOS extraction logic, for example, extracting text from the body
+    // This is a placeholder function to extract TOS text.
+    // Replace this logic with actual DOM parsing or content extraction.
     const tosText = document.body.innerText.match(/Terms of Service/i)
-      ? document.body.innerText
-      : null;
+        ? document.body.innerText
+      : "Dummy Terms of Service text for testing.";
   
     console.log("TOS text extracted:", tosText);
     return tosText;
   }
   
+
+  
+  
   ignoreButton.addEventListener('click', function() {
     document.body.removeChild(popup);
+    isPopupShown = false; 
 
   });
   
@@ -285,23 +297,67 @@ const showTOSPopup = () => {
   // Append the popup to the body
   document.body.appendChild(popup);
 };
-
+const isBlacklistedPage = () => {
+  const blacklistedDomains = ['accounts.google.com', 'mail.google.com', 'chat.openai.com'];
+  return blacklistedDomains.some(domain => window.location.hostname.includes(domain));
+};
 // Continuously check for TOS detection on page load and at intervals
 const autoDetectTOS = () => {
   chrome.storage.local.get('autoDetect', function(data) {
-    if (data.autoDetect && checkForTOS()) {
-      showTOSPopup();  // Only show the popup if TOS is detected
+    if (data.autoDetect && !isBlacklistedPage()) {
+      if (document.readyState === 'complete') {
+        // Get ignored pages from storage
+        chrome.storage.local.get('ignoredPages', function(ignoredData) {
+          const ignoredPages = ignoredData.ignoredPages || {};
+          const currentPageUrl = window.location.href;
+
+          // Check if the page is ignored
+          if (!ignoredPages[currentPageUrl] && checkForTOS()) {
+            showTOSPopup(); // Show popup if TOS is detected
+          }
+        });
+      } else {
+        // Wait a bit if the document is still loading
+        setTimeout(autoDetectTOS, 1000);
+      }
     }
   });
 };
 
-// Only check after the page load
-window.addEventListener('load', autoDetectTOS);
+ignoreButton.addEventListener('click', function() {
+  const currentPageUrl = window.location.href;
 
-// Optionally add a periodic check (e.g., every 5 seconds) but only if TOS isn't already shown
-setInterval(() => {
-  if (!isPopupShown) {
-    autoDetectTOS();
-  }
-}, 5000);
+  // Get ignored pages from storage
+  chrome.storage.local.get('ignoredPages', function(ignoredData) {
+    const ignoredPages = ignoredData.ignoredPages || {};
+
+    // Mark the current page as ignored
+    ignoredPages[currentPageUrl] = true;
+
+    // Save the updated ignored pages to storage
+    chrome.storage.local.set({ ignoredPages: ignoredPages });
+
+    // Close the popup after ignoring
+    document.body.removeChild(popup);
+    isPopupShown = false;  // Reset the popup flag
+  });
+});
+
+const currentPageUrl = window.location.href;
+  chrome.storage.local.get('ignoredPages', function(ignoredData) {
+    const ignoredPages = ignoredData.ignoredPages || {};
+
+    // Mark the current page as ignored
+    ignoredPages[currentPageUrl] = true;
+
+    // Save the updated ignored pages to storage
+    chrome.storage.local.set({ ignoredPages: ignoredPages });
+
+    // Close the popup after summarizing
+    document.body.removeChild(popup);
+    isPopupShown = false; // Reset the popup flag
+  });
+
+// Only check after the page load
+
 
