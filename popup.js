@@ -84,17 +84,34 @@ document.addEventListener('DOMContentLoaded', function () {
   };
   
   // Example function to extract TOS text (needs real implementation)
-  async function extractTOSText() {
-    console.log("Extracting TOS text...");
-    // This is a placeholder function to extract TOS text.
-    // Replace this logic with actual DOM parsing or content extraction.
-    const tosText = document.body.innerText.match(/Terms of Service/i)
-        ? document.body.innerText
-      : "Dummy Terms of Service text for testing.";
   
-    console.log("TOS text extracted:", tosText);
-    return tosText;
+  async function extractTOSText() {
+    console.log("Extracting page text...");
+
+  // Extract all visible text on the page
+    const pageText = document.body.innerText;
+
+    // Structure the result for testing or ML purposes
+    const result = {
+      page_url: window.location.href,
+      extracted_text: pageText,
+    };
+
+    // Log the result for testing
+    console.log("Extracted text:", JSON.stringify(result, null, 2));
+
+    // Optionally: Save the result as a JSON file for later use
+    const jsonBlob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(jsonBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'extracted-page-text.json';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    return result;
   }
+  
   
 
   // Detect TOS or Privacy Policy on the page (works even if auto-detect is off)
