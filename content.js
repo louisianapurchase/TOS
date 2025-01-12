@@ -244,8 +244,10 @@ const showTOSPopup = () => {
     }
   
     // Remove the popup after summarization is complete
-    document.body.removeChild(popup);
-    isPopupShown = false; // Reset the flag so it can be shown again if needed
+    if (popup && document.body.contains(popup)) {
+      document.body.removeChild(popup);
+    }
+     // Reset the flag so it can be shown again if needed
   });
   
   
@@ -291,7 +293,7 @@ const showTOSPopup = () => {
   // Append elements to shadow DOM
   container.appendChild(summarizeButton);
   container.appendChild(ignoreButton);
-  container.appendChild(autoDetectText);
+  container.appendChild(autoDetectText);       
   shadowRoot.appendChild(container);
 
   // Append the popup to the body
@@ -327,36 +329,33 @@ const autoDetectTOS = () => {
 ignoreButton.addEventListener('click', function() {
   const currentPageUrl = window.location.href;
 
-  // Get ignored pages from storage
+  chrome.storage.local.get('ignoredPages', function(ignoredData) {
+    if (!ignoredData.ignoredPages) {
+      chrome.storage.local.set({ ignoredPages: {} });  // Initialize ignoredPages if it doesn't exist
+    }
+  });
+  
   chrome.storage.local.get('ignoredPages', function(ignoredData) {
     const ignoredPages = ignoredData.ignoredPages || {};
-
-    // Mark the current page as ignored
-    ignoredPages[currentPageUrl] = true;
-
-    // Save the updated ignored pages to storage
+    ignoredPages[currentPageUrl] = true;  // Mark current page as ignored
     chrome.storage.local.set({ ignoredPages: ignoredPages });
 
-    // Close the popup after ignoring
-    document.body.removeChild(popup);
-    isPopupShown = false;  // Reset the popup flag
+    document.body.removeChild(popup);  // Close popup
   });
 });
 
-const currentPageUrl = window.location.href;
-  chrome.storage.local.get('ignoredPages', function(ignoredData) {
-    const ignoredPages = ignoredData.ignoredPages || {};
 
-    // Mark the current page as ignored
-    ignoredPages[currentPageUrl] = true;
+chrome.storage.local.get('ignoredPages', function(ignoredData) {
+  const ignoredPages = ignoredData.ignoredPages || {};
+  const currentPageUrl = window.location.href;
 
-    // Save the updated ignored pages to storage
-    chrome.storage.local.set({ ignoredPages: ignoredPages });
+  console.log('Current Page URL:', currentPageUrl);
+  console.log('Ignored Pages:', ignoredPages);
 
-    // Close the popup after summarizing
-    document.body.removeChild(popup);
-    isPopupShown = false; // Reset the popup flag
-  });
+  if (!ignoredPages[currentPageUrl] && checkForTOS()) {
+    showTOSPopup(); // Show popup if TOS is detected
+  }
+});
 
 // Only check after the page load
 
