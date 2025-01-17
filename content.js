@@ -42,9 +42,7 @@ const checkForTOS = () => {
     /reject/i
   ];
 
-  // Context-based element detection
   const detectContextualElements = () => {
-    // Check if modal-like elements exist
     const modals = document.querySelectorAll('div[role="dialog"], div[class*="modal"], div[class*="popup"]');
     for (const modal of modals) {
       const modalText = modal.innerText.toLowerCase();
@@ -53,7 +51,6 @@ const checkForTOS = () => {
       }
     }
 
-    // Check for buttons or links with action keywords
     const buttons = document.querySelectorAll('button, a');
     for (const button of buttons) {
       if (actionKeywords.some((regex) => regex.test(button.innerText))) {
@@ -63,6 +60,7 @@ const checkForTOS = () => {
         }
       }
     }
+
     const footer = document.querySelector('footer');
     if (footer && tosPhrases.some((regex) => regex.test(footer.innerText.toLowerCase()))) {
       return false;  // Don't trigger popup if it's just footer text
@@ -71,33 +69,43 @@ const checkForTOS = () => {
     return false; // No contextual elements detected
   };
 
-  // Check if terms are present in body text or relevant elements
+  // Check if TOS is present in body text or relevant elements
   const isTOSDetected = tosPhrases.some((regex) => regex.test(pageText)) || detectContextualElements();
   return isTOSDetected;
 };
 
 // Listen for the check request from popup.js to know if TOS is present
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  console.log('Received action:', request.action);
+
   if (request.action === 'checkForTOS') {
     const isTOSDetected = checkForTOS();
+    console.log('TOS detected:', isTOSDetected);
     sendResponse({ isTOSDetected });
   }
-  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.action === 'extractTOS') {
-      const pageText = document.body.innerText;
-  
-      // Clean up the text by removing unnecessary line breaks and excessive whitespace
-      const cleanText = pageText.replace(/\s+/g, ' ').trim();
-  
-      // Send the extracted text back to the popup
-      sendResponse({ text: cleanText });
-    }
-  });
-  // If auto-detect is enabled, show the popup automatically when TOS is detected
+
+  if (request.action === 'extractTOS') {
+    const pageText = document.body.innerText;
+    const cleanText = pageText.replace(/\s+/g, ' ').trim();
+    sendResponse({ text: cleanText });
+  }
+
+  // Auto-detect and show popup if TOS is found
   if (request.action === 'showTOSPopup') {
-    showTOSPopup();  // Function to show the popup
+    showTOSPopup();
   }
 });
+
+// Ensure TOS is checked after the page fully loads
+if (document.readyState === 'complete') {
+  console.log('Page fully loaded. Checking for TOS...');
+  checkForTOS(); // Check TOS as soon as the page is fully loaded
+} else {
+  window.addEventListener('load', () => {
+    console.log('Page fully loaded. Checking for TOS...');
+    checkForTOS(); // Check TOS when the page is ready
+  });
+}
 
 // Function to display the popup when TOS is detected
 const showTOSPopup = () => {
@@ -349,11 +357,13 @@ const showTOSPopup = () => {
     return pageText;
 }
   
-  ignoreButton.addEventListener('click', function() {
+ignoreButton.addEventListener('click', function () {
+  if (popup && document.body.contains(popup)) {
     document.body.removeChild(popup);
-    isPopupShown = false; 
+    isPopupShown = false; // Reset popup state
+  }
+});
 
-  });
   
 
   // Add small text at the bottom about turning off auto-popup
@@ -377,26 +387,28 @@ const isBlacklistedPage = () => {
 // Continuously check for TOS detection on page load and at intervals
 const autoDetectTOS = () => {
   console.log('Checking for TOS...');
-  chrome.storage.local.get('autoDetect', function(data) {
-    if (document.readyState === 'complete') {
-       if (data.autoDetect && !isBlacklistedPage()) {
-        // Get ignored pages from storage
-        chrome.storage.local.get('ignoredPages', function(ignoredData) {
-          const ignoredPages = ignoredData.ignoredPages || {};
-          const currentPageUrl = window.location.href;
+  chrome.storage.local.get(['autoDetect', 'ignoredPages'], function(data) {
+    const autoDetect = data.autoDetect;
+    const ignoredPages = data.ignoredPages || {};
+    const currentPageUrl = window.location.href;
 
-          // Check if the page is ignored
-          if (!ignoredPages[currentPageUrl] && checkForTOS()) {
-            showTOSPopup(); // Show popup if TOS is detected
-          }
-        });
-      } else {
-        // Wait a bit if the document is still loading
-        setTimeout(autoDetectTOS, 1000);
+    console.log('Auto-detect enabled:', autoDetect);
+    console.log('Ignored Pages:', ignoredPages);
+    console.log('Current Page URL:', currentPageUrl);
+
+    if (autoDetect && !isBlacklistedPage() && !ignoredPages[currentPageUrl]) {
+      const isTOSDetected = checkForTOS();
+      console.log('TOS Detected:', isTOSDetected);
+      if (isTOSDetected) {
+        showTOSPopup();
       }
     }
   });
 };
+
+// Ensure this runs after the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', autoDetectTOS);
+
 
 ignoreButton.addEventListener('click', function() {
   const currentPageUrl = window.location.href;
