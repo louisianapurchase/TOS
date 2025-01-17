@@ -302,7 +302,7 @@ const showTOSPopup = () => {
 
       // Parse the response data
       const data = await response.json();
-      alert(`Summary: ${data.summary}\nScore: ${data.score}\nScore Rating: ${data.SummaryofScore}`);
+      alert(`Summary: ${data.summary}\nScore: ${data.score}\nScore Rating: ${data.RiskScore}\nRisk Summary: ${data.RiskSummary}\nRisk Breakdown: ${data.RiskBreakdown}`);
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to summarize TOS. Please try again.');
