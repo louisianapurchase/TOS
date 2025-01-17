@@ -7,7 +7,7 @@
   <body>
     <div class="popup-container">
       <h1 class="popup-title">
-        <img src="Icons\TermsofServiceExaminingtool.png" alt="Icon" class="title-icon" />
+        <img src="Icons/TermsofServiceExaminingtool.png" alt="Icon" class="title-icon" />
         TermsSimplify
       </h1>
       
@@ -19,7 +19,17 @@
       <button id="summarize-btn" class="action-button">Summarize TOS Manually</button>
 
       <p id="summary" class="status-message">No TOS detected yet...</p>
+
+      <!-- Add the loading indicator and progress bar -->
+      <div id="loading-container" style="display: none;">
+        <p>Processing...</p>
+        <div class="progress-bar">
+          <div id="progress" class="progress"></div>
+        </div>
+        <p id="percentage" class="percentage">0%</p>
+      </div>
     </div>
+
     <script src="popup.js"></script>
   </body>
 </html>

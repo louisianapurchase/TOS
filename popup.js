@@ -16,59 +16,56 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Save the state of the auto-detect option when toggled
-  summarizeButton.addEventListener('click', async function() {
+  document.getElementById('summarize-btn').addEventListener('click', async function() {
     console.log("Summarize button clicked");
-
-    try {
-        const tosText = await extractTOSText(); // Wait for TOS text extraction
+  
+    // Send a message to content.js to extract the TOS text
+    document.getElementById('loading-container').style.display = 'block';
+    let progress = 0;
+    updateProgress(progress);
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'extractTOS' }, async function(response) {
+        const tosText = response.text;
         console.log("Extracted TOS Text:", tosText);
-
-        // If no TOS text is found, alert the user and stop
+  
         if (!tosText) {
-            alert("No TOS text detected.");
-            return;
+          alert("No TOS text detected.");
+          return;
         }
-
-        // Send TOS text to the Flask server for summarization
-        const response = await fetch('http://localhost:5000/summarize', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tosText: tosText })  // Ensure it's a string
+        progress = 25;
+        updateProgress(progress);
+        // Proceed with sending extracted TOS text to the summarizer
+        const summarizeResponse = await fetch('http://localhost:5000/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tosText: tosText })
+          
         });
+        progress = 50;
+        updateProgress(progress);
+        if (summarizeResponse.ok) {
+          const summaryData = await summarizeResponse.json();
+          progress = 75;
+          updateProgress(progress);
 
-        // Check if the response is okay (status code 200-299)
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert(`Error: ${errorData.error || "Unknown error"}`);
-            console.error("Error from server:", errorData);
-            return;
-        }
-
-        // Parse the response data
-        const data = await response.json();
-        console.log("Server response:", data);
-
-        // Check if there is an error in the response
-        if (data.error) {
-            alert(`Error: ${data.error}`);
+          alert(`Summary: ${summaryData.summary}\nScore: ${summaryData.score}\nScore Rating: ${summaryData.SummaryofScore}`);
+          progress = 100;
+          updateProgress(progress);
         } else {
-            // Show the summary and score in an alert or update your popup UI
-            alert(`Summary: ${data.summary}\nScore: ${data.score}`);
+          alert("Failed to summarize TOS.");
         }
-    } catch (error) {
-        // Catch any errors in the async flow
-        console.error('Error:', error);
-        alert('Failed to summarize TOS. Please try again.');
-    }
+        setTimeout(() => {
+          document.getElementById('loading-container').style.display = 'none';
+        }, 500); // Hide after 500ms delay for smooth transition
+      });
+    });
+  });
 
-    // Remove the popup after summarization is complete
-    if (popup && document.body.contains(popup)) {
-        document.body.removeChild(popup);
-    }
-    // Reset the flag so it can be shown again if needed
-});
-  
-  
+  function updateProgress(percentage) {
+    document.getElementById('progress').style.width = `${percentage}%`;
+    document.getElementById('percentage').textContent = `${percentage}%`;
+  }
+
   // Function to update summary text based on TOS detection
   const updateSummaryText = (isTOSDetected) => {
     if (isTOSDetected) {
@@ -79,9 +76,8 @@ document.addEventListener('DOMContentLoaded', function () {
       console.log('No TOS detected yet...');
     }
   };
-  
+
   // Example function to extract TOS text (needs real implementation)
-  
   async function extractTOSText() {
     console.log("Extracting page text...");
 
@@ -98,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Optional: Limit the length of the extracted text to avoid oversized payload
-    const maxLength = 1000;
+    const maxLength = 1024;
     if (pageText.length > maxLength) {
         pageText = pageText.substring(0, maxLength) + "..."; // Trim the text
     }
@@ -106,9 +102,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Ensure this is a string and return it
     return pageText;
 }
-
-  
-  
 
   // Detect TOS or Privacy Policy on the page (works even if auto-detect is off)
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
@@ -121,6 +114,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } else {
         updateSummaryText(false); // Otherwise, keep "No TOS detected yet..."
+        
+        // Disable summarize button and turn it red
+        summarizeButton.disabled = true;
+        summarizeButton.style.backgroundColor = '#f44336';  // Red color like the hover effect
+        summarizeButton.style.cursor = 'not-allowed';  // Change cursor to show it's disabled
       }
     });
   });

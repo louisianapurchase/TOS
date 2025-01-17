@@ -82,7 +82,17 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     const isTOSDetected = checkForTOS();
     sendResponse({ isTOSDetected });
   }
-
+  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if (request.action === 'extractTOS') {
+      const pageText = document.body.innerText;
+  
+      // Clean up the text by removing unnecessary line breaks and excessive whitespace
+      const cleanText = pageText.replace(/\s+/g, ' ').trim();
+  
+      // Send the extracted text back to the popup
+      sendResponse({ text: cleanText });
+    }
+  });
   // If auto-detect is enabled, show the popup automatically when TOS is detected
   if (request.action === 'showTOSPopup') {
     showTOSPopup();  // Function to show the popup
@@ -163,6 +173,34 @@ const showTOSPopup = () => {
       color: #ccc;
       margin-top: 15px;
     }
+    /* Loading Progress Bar Styling */
+    #loading-container {
+      display: none; /* Initially hidden */
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .progress-bar {
+      width: 150px;
+      height: 20px;
+      background-color: #ccc;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress {
+      height: 100%;
+      width: 0%; /* Start at 0% width */
+      background-color: #8743d0; /* Purple progress */
+      border-radius: 10px;
+    }
+
+    .percentage {
+      font-size: 14px;
+      color: #fff;
+      margin-top: 5px;
+    }
   `;
   shadowRoot.appendChild(style);
 
@@ -197,58 +235,80 @@ const showTOSPopup = () => {
   ignoreButton.classList.add('action-button');
   ignoreButton.textContent = 'Ignore';
 
+  // Loading container for progress bar
+  const loadingContainer = document.createElement('div');
+  loadingContainer.id = 'loading-container';
+  loadingContainer.style.display = 'none'; // Initially hidden
+
+  const progressBarContainer = document.createElement('div');
+  progressBarContainer.classList.add('progress-bar');
+  
+  const progress = document.createElement('div');
+  progress.classList.add('progress');
+
+  const percentage = document.createElement('div');
+  percentage.classList.add('percentage');
+  percentage.textContent = '0%'; // Start at 0%
+
+  progressBarContainer.appendChild(progress);
+  loadingContainer.appendChild(progressBarContainer);
+  loadingContainer.appendChild(percentage);
+
+  container.appendChild(summarizeButton);
+  container.appendChild(ignoreButton);
+  container.appendChild(loadingContainer);
+
   // Add event listeners to the buttons
   summarizeButton.addEventListener('click', async function() {
-    console.log("Summarize button clicked");
-
+    // Show the loading bar
+    loadingContainer.style.display = 'block';
+    progress.style.width = '0%'; // Reset progress
+    percentage.textContent = `${0}%`
     try {
-        const tosText = await extractTOSText(); // Wait for TOS text extraction
-        console.log("Extracted TOS Text:", tosText);
+      const tosText = await extractTOSText(); // Wait for TOS text extraction
+      if (!tosText) {
+        alert("No TOS text detected.");
+        return;
+      }
+      percentage.textContent = `${15}%`
+      // Send TOS text to the Flask server for summarization
+      const response = await fetch('http://localhost:5000/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tosText: tosText })
+      });
+       percentage.textContent = `${30}%`
+      // Update the progress bar while processing
+      for (let i = 30; i <= 100; i++) {
+        progress.style.width = `${i}%`;
+        percentage.textContent = `${i}%`;
+        await new Promise(resolve => setTimeout(resolve, 30)); // Simulate progress
+      }
 
-        // If no TOS text is found, alert the user and stop
-        if (!tosText) {
-            alert("No TOS text detected.");
-            return;
-        }
+      // Check if the response is okay
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error || "Unknown error"}`);
+        return;
+      }
 
-        // Send TOS text to the Flask server for summarization
-        const response = await fetch('http://localhost:5000/summarize', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tosText: tosText })  // Ensure it's a string
-        });
-
-        // Check if the response is okay (status code 200-299)
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert(`Error: ${errorData.error || "Unknown error"}`);
-            console.error("Error from server:", errorData);
-            return;
-        }
-
-        // Parse the response data
-        const data = await response.json();
-        console.log("Server response:", data);
-
-        // Check if there is an error in the response
-        if (data.error) {
-            alert(`Error: ${data.error}`);
-        } else {
-            // Show the summary and score in an alert or update your popup UI
-            alert(`Summary: ${data.summary}\nScore: ${data.score}`);
-        }
+      // Parse the response data
+      const data = await response.json();
+      alert(`Summary: ${data.summary}\nScore: ${data.score}\nScore Rating: ${data.SummaryofScore}`);
     } catch (error) {
-        // Catch any errors in the async flow
-        console.error('Error:', error);
-        alert('Failed to summarize TOS. Please try again.');
-    }
-
-    // Remove the popup after summarization is complete
-    if (popup && document.body.contains(popup)) {
+      console.error('Error:', error);
+      alert('Failed to summarize TOS. Please try again.');
+    } 
+      finally {
+      // Hide the loading bar and reset the progress
+      loadingContainer.style.display = 'none';
+      progress.style.width = '0%';
+      percentage.textContent = '0%';
+      if (popup && document.body.contains(popup)) {
         document.body.removeChild(popup);
     }
-    // Reset the flag so it can be shown again if needed
-});
+    }
+  });
 
   
   // Function to update summary text based on TOS detection
@@ -280,7 +340,7 @@ const showTOSPopup = () => {
     }
 
     // Optional: Limit the length of the extracted text to avoid oversized payload
-    const maxLength = 1500;
+    const maxLength = 1024;
     if (pageText.length > maxLength) {
         pageText = pageText.substring(0, maxLength) + "..."; // Trim the text
     }
@@ -288,9 +348,6 @@ const showTOSPopup = () => {
     // Ensure this is a string and return it
     return pageText;
 }
-
-
-  
   
   ignoreButton.addEventListener('click', function() {
     document.body.removeChild(popup);

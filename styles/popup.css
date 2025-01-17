@@ -137,3 +137,31 @@ body {
   color: #ccc;
   margin-top: 15px;
 }
+/* Loading Progress Bar Styling */
+#loading-container {
+  display: none; /* Initially hidden */
+  text-align: center;
+  margin-top: 20px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background-color: #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress {
+  height: 100%;
+  width: 0; /* Start at 0% width */
+  background-color: #8743d0; /* Purple progress */
+  border-radius: 10px;
+}
+
+.percentage {
+  font-size: 14px;
+  color: #fff;
+  margin-top: 5px;
+}
