@@ -30,10 +30,114 @@ def classify_sentiment(score):
 # Function to classify legal risk based on key phrases
 def classify_risk(tos_text):
     risk_factors = {
-        "GDPR Compliance": ["GDPR", "data protection", "right to be forgotten"],
-        "Liability Clauses": ["liability", "indemnity", "hold harmless"],
-        "Data Sharing": ["third-party sharing", "data sharing", "advertisers"],
-        "User Rights": ["access rights", "control", "opt-out"]
+        {
+    "GDPR Compliance": [
+        "GDPR",
+        "data protection",
+        "right to be forgotten"
+    ],
+    "Liability Clauses": [
+        "liability",
+        "indemnity",
+        "hold harmless"
+    ],
+    "Data Sharing": [
+        "third-party sharing",
+        "data sharing",
+        "advertisers",
+        "share your data with affiliated companies",
+        "access to your data by government agencies",
+        "partners and vendors accessing your data",
+        "unnamed third-party partners"
+    ],
+    "User Rights": [
+        "access rights",
+        "control",
+        "opt-out",
+        "cannot delete your account",
+        "limited privacy settings",
+        "no way to delete your associated data",
+        "privacy policy updates without notice"
+    ],
+    "Data Collection": [
+        "sensitive personal information",
+        "behavioral data",
+        "location data",
+        "data from third-party sources",
+        "data collected when offline",
+        "all data you provide",
+        "tracking browsing history and interactions"
+    ],
+    "Data Usage": [
+        "profiling",
+        "personalized ads",
+        "automated decisions",
+        "targeted advertising",
+        "data used for any purpose",
+        "data combined with other sources",
+        "data sold to third parties"
+    ],
+    "Data Retention": [
+        "retain your data indefinitely",
+        "backup copies",
+        "data storage outside jurisdiction",
+        "stored in weak data protection regions"
+    ],
+    "Tracking Technologies": [
+        "cookies",
+        "tracking technologies",
+        "browser fingerprinting",
+        "Do Not Track",
+        "website tracking your activity",
+        "invasive tracking technologies",
+        "third-party trackers"
+    ],
+    "Security Risks": [
+        "unauthorized access",
+        "unsecured databases",
+        "data breaches",
+        "no guarantees of safety",
+        "not responsible for privacy violations",
+        "data transmitted without encryption"
+    ],
+    "User Consent": [
+        "automatic agreement",
+        "no opt-out options",
+        "cannot delete account",
+        "policy updates without notice",
+        "consent implied through service usage"
+    ],
+    "Legal Terms": [
+        "binding arbitration",
+        "class-action waiver",
+        "laws of weak user protections",
+        "waive your right to hold us accountable",
+        "governed by laws in other jurisdictions"
+    ],
+    "Children's Privacy": [
+        "data from children under 13",
+        "targeted advertising to children",
+        "collecting children’s data without parental consent"
+    ],
+    "Vague or Misleading Terms": [
+        "necessary data",
+        "improve our services",
+        "policy subject to interpretation",
+        "terms open to interpretation",
+        "use your data as determined by us"
+    ],
+    "Behavioral and Emotional Profiling": [
+        "analyze your emotions",
+        "predict your behavior",
+        "psychological profiling shared with third parties"
+    ],
+    "Right to Modify Terms": [
+        "modify terms without notice",
+        "implied acceptance of changes",
+        "unilateral changes to the policy"
+    ]
+}
+
     }
 
     risk_score = 100  # Start with the highest score
@@ -87,11 +191,9 @@ def summarize():
 
         # Respond with summary, sentiment score, and risk breakdown
         return jsonify({
-            "summary": summary,
-            "score": normalized_score,
             "RiskScore": risk_score,
             "RiskSummary": RiskSummary,
-            "RiskBreakdown": risk_breakdown  # Breakdown of identified risks
+            #"RiskBreakdown": risk_breakdown  # Breakdown of identified risks
         })
     except Exception as e:
         print("Error:", e)
