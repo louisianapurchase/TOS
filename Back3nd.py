@@ -30,7 +30,7 @@ def classify_sentiment(score):
 # Function to classify legal risk based on key phrases
 def classify_risk(tos_text):
     risk_factors = {
-        {
+        
     "GDPR Compliance": [
         "GDPR",
         "data protection",
@@ -136,9 +136,9 @@ def classify_risk(tos_text):
         "implied acceptance of changes",
         "unilateral changes to the policy"
     ]
-}
 
-    }
+}
+    
 
     risk_score = 100  # Start with the highest score
     risk_breakdown = {}
@@ -153,11 +153,11 @@ def classify_risk(tos_text):
     return risk_score, risk_breakdown
 
 # Load pre-trained Hugging Face summarization model
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+#summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
 # Initialize SentimentIntensityAnalyzer for sentiment scoring
-nltk.download("vader_lexicon")
-sia = SentimentIntensityAnalyzer()
+#nltk.download("vader_lexicon")
+#sia = SentimentIntensityAnalyzer()
 
 # Sample endpoint for summarizing and scoring TOS text
 @app.route('/summarize', methods=['POST', 'OPTIONS'])
@@ -179,20 +179,21 @@ def summarize():
             return jsonify({"error": "No TOS text provided"}), 400
 
         # Summarize the TOS text using Hugging Face's model
-        summary = summarizer(tos_text, max_length=130, min_length=30, do_sample=False)[0]["summary_text"]
+        #summary = summarizer(tos_text, max_length=130, min_length=30, do_sample=False)[0]["summary_text"]
 
         # Score the TOS text (e.g., sentiment analysis for risk scoring)
-        sentiment_score = sia.polarity_scores(tos_text)["compound"]
-        normalized_score = round((sentiment_score + 1) * 50)  # Convert sentiment to a 0-100 scale
+        #sentiment_score = sia.polarity_scores(tos_text)["compound"]
+        #normalized_score = round((sentiment_score + 1) * 50)  # Convert sentiment to a 0-100 scale
 
         # Risk assessment based on legal clauses (GDPR, liability, data sharing, etc.)
         risk_score, risk_breakdown = classify_risk(tos_text)
-        RiskSummary = classify_sentiment(risk_score)
+        risk_summary = classify_sentiment(risk_score)
 
         # Respond with summary, sentiment score, and risk breakdown
         return jsonify({
             "RiskScore": risk_score,
-            "RiskSummary": RiskSummary,
+            "RiskSummary": risk_summary,
+            "RiskBreakDown": risk_breakdown
             #"RiskBreakdown": risk_breakdown  # Breakdown of identified risks
         })
     except Exception as e:
