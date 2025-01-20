@@ -280,7 +280,7 @@ const showTOSPopup = () => {
       }
       percentage.textContent = `${15}%`
       // Send TOS text to the Flask server for summarization
-      const response = await fetch('http://localhost:5000/summarize', {
+      const summarizeResponse = await fetch('http://localhost:5000/summarize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tosText: tosText })
@@ -294,16 +294,12 @@ const showTOSPopup = () => {
       }
 
       // Check if the response is okay
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.error || "Unknown error"}`);
-        return;
-      }
+      if (summarizeResponse.ok) {
+        const summaryData = await summarizeResponse.json();
 
-      // Parse the response data
-      const data = await response.json();
-      // alert(`Score Rating: ${data.RiskScore}\nRisk Summary: ${data.RiskSummary}\nRisk Breakdown: ${data.RiskBreakdown}`);
-      alert(`Risk Summary: ${data.RiskSummary}\nRisk Breakdown: ${data.RiskBreakdown}`);
+      alert(`Risk Score: ${summaryData.RiskScore}\nRisk Summary: ${summaryData.RiskSummary}\nRisk Breakdown: ${JSON.stringify(summaryData.RiskBreakDown)}`);
+
+      }
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to summarize TOS. Please try again.');

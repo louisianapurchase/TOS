@@ -148,7 +148,7 @@ def classify_risk(tos_text):
         for keyword in keywords:
             if keyword.lower() in tos_text.lower():
                 risk_score -= 20  # Deduct points for risky clauses
-                risk_breakdown[factor] = "Present"
+                risk_breakdown[factor] = " Present "
 
     return risk_score, risk_breakdown
 
