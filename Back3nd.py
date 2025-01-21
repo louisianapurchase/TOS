@@ -147,7 +147,7 @@ def classify_risk(tos_text):
     for factor, keywords in risk_factors.items():
         for keyword in keywords:
             if keyword.lower() in tos_text.lower():
-                risk_score -= 20  # Deduct points for risky clauses
+                risk_score -= 5  # Deduct points for risky clauses
                 risk_breakdown[factor] = " Present "
 
     return risk_score, risk_breakdown
@@ -188,7 +188,6 @@ def summarize():
         # Risk assessment based on legal clauses (GDPR, liability, data sharing, etc.)
         risk_score, risk_breakdown = classify_risk(tos_text)
         risk_summary = classify_sentiment(risk_score)
-
         # Respond with summary, sentiment score, and risk breakdown
         return jsonify({
             "RiskScore": risk_score,
