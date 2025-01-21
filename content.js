@@ -268,43 +268,50 @@
     container.appendChild(loadingContainer);
 
    // Add event listeners to the buttons
-    summarizeButton.addEventListener('click', async function () {
-      loadingContainer.style.display = 'block';
-      progress.style.width = '0%'; 
-      percentage.textContent = '0%';
-    
-      try {
-        const tosText = await extractTOSText();
-        if (!tosText) {
-          alert("No TOS text detected.");
-          return;
-        }
-    
-        percentage.textContent = '15%';
-    
-        const summarizeResponse = await fetch('http://localhost:5000/summarize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tosText: tosText }),
-        });
-    
-        if (summarizeResponse.ok) {
-          const summaryData = await summarizeResponse.json();
-          console.log('Summary Data:', summaryData); 
-
-          alert(`Risk Score: ${summaryData.RiskScore}\nRisk Summary: ${summaryData.RiskSummary}\nRisk Breakdown: ${JSON.stringify(summaryData.RiskBreakDown)}`);
-        } else {
-          alert('Failed to summarize TOS.');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to summarize TOS. Please try again.');
-      } finally {
-        loadingContainer.style.display = 'none';
-        progress.style.width = '0%';
-        percentage.textContent = '0%';
+   summarizeButton.addEventListener('click', async function () {
+    loadingContainer.style.display = 'block';
+    progress.style.width = '0%'; 
+    percentage.textContent = '0%';
+  
+    try {
+      const tosText = await extractTOSText();
+      if (!tosText) {
+        alert("No TOS text detected.");
+        return;
       }
-    });
+  
+      percentage.textContent = '15%';
+  
+      const summarizeResponse = await fetch('http://localhost:5000/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tosText: tosText }),
+      });
+  
+      if (summarizeResponse.ok) {
+        const summaryData = await summarizeResponse.json();
+        console.log('Summary Data:', summaryData);
+  
+        alert(`Risk Score: ${summaryData.RiskScore}\nRisk Summary: ${summaryData.RiskSummary}\nRisk Breakdown: ${JSON.stringify(summaryData.RiskBreakDown)}\nSummary: ${summaryData.Summary}`);
+      } else {
+        alert('Failed to summarize TOS.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to summarize TOS. Please try again.');
+    } finally {
+      loadingContainer.style.display = 'none';
+      progress.style.width = '0%';
+      percentage.textContent = '0%';
+      shadowRoot.querySelector('.popup-container').style.display = 'none'; // Hide the popup container in shadow DOM
+    }
+  });
+  
+  ignoreButton.addEventListener('click', function () {
+    shadowRoot.querySelector('.popup-container').style.display = 'none'; // Hide the popup container in shadow DOM
+  });
+
+  
     
 
     

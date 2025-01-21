@@ -48,8 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
           progress = 75;
           updateProgress(progress);
 
-          alert(`Risk Score: ${summaryData.RiskScore}\nRisk Summary: ${summaryData.RiskSummary}\nRisk Breakdown: ${JSON.stringify(summaryData.RiskBreakDown)}`);
-
+          alert(`Risk Score: ${summaryData.RiskScore}\nRisk Summary: ${summaryData.RiskSummary}\nRisk Breakdown: ${JSON.stringify(summaryData.RiskBreakDown)}\nSummary: ${summaryData.Summary}`);
           //alert(`Score Rating: ${data.RiskScore}\nRisk Summary: ${data.RiskSummary}\nRisk Breakdown: ${data.RiskBreakdown}`);
           progress = 100;
           updateProgress(progress);

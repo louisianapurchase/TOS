@@ -153,7 +153,7 @@ def classify_risk(tos_text):
     return risk_score, risk_breakdown
 
 # Load pre-trained Hugging Face summarization model
-#summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
 # Initialize SentimentIntensityAnalyzer for sentiment scoring
 #nltk.download("vader_lexicon")
@@ -177,9 +177,10 @@ def summarize():
         print("Received TOS text:", tos_text)
         if not tos_text:
             return jsonify({"error": "No TOS text provided"}), 400
-
-        # Summarize the TOS text using Hugging Face's model
-        #summary = summarizer(tos_text, max_length=130, min_length=30, do_sample=False)[0]["summary_text"]
+        def truncate_to_1024(tos_text):
+            return tos_text[:1024]
+        truncated_tos = truncate_to_1024(tos_text) 
+        summary = summarizer(truncated_tos, max_length=130, min_length=30, do_sample=False)[0]["summary_text"]
 
         # Score the TOS text (e.g., sentiment analysis for risk scoring)
         #sentiment_score = sia.polarity_scores(tos_text)["compound"]
@@ -192,8 +193,9 @@ def summarize():
         return jsonify({
             "RiskScore": risk_score,
             "RiskSummary": risk_summary,
-            "RiskBreakDown": risk_breakdown
-            #"RiskBreakdown": risk_breakdown  # Breakdown of identified risks
+            "RiskBreakDown": risk_breakdown,
+            "Summary" : summary
+             #"RiskBreakdown": risk_breakdown  # Breakdown of identified risks
         })
     except Exception as e:
         print("Error:", e)
